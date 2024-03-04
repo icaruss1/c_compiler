@@ -1,14 +1,20 @@
+//enums containing all labels of all Keywords
+#[derive(Debug, PartialEq)]
 pub enum Keyword {
     Return,
     Int,
 }
 
+// enum containing the Literals along with initialising values
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     Identifier(String),
     Str(String),
     Number(f64),
 }
 
+// enum containing all tokentypes, everythign that can be
+// recognised by lexer should be contained here
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
     // Single Length Tokens
@@ -17,13 +23,16 @@ pub enum TokenType {
     LeftBrace,
     RightBrace,
     Semicolon,
-    Literal,
-    Keyword,
+
+    // Literals and Keywords are Nested enums
+    Literal(Literal),
+    Keyword(Keyword),
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
+    pub lexeme: Vec<u8>, //for having the lexed representations
 }
 
 pub struct Lexer {
@@ -49,18 +58,23 @@ impl Lexer {
             // matching all the single length tokens
             match b {
                 b'(' => self.tkns.push(Token {
+                    lexeme: vec![b'('],
                     ty: TokenType::LeftParen,
                 }),
                 b')' => self.tkns.push(Token {
+                    lexeme: vec![b')'],
                     ty: TokenType::RightParen,
                 }),
                 b'}' => self.tkns.push(Token {
+                    lexeme: vec![b'}'],
                     ty: TokenType::RightBrace,
                 }),
                 b'{' => self.tkns.push(Token {
+                    lexeme: vec![b'{'],
                     ty: TokenType::LeftBrace,
                 }),
                 b';' => self.tkns.push(Token {
+                    lexeme: vec![b';'],
                     ty: TokenType::Semicolon,
                 }),
                 // match the literals under all the rest
@@ -96,27 +110,51 @@ mod tests {
     fn newlines_testcase() -> Result<(), ()> {
         let bytes: Vec<u8> = String::from("\nint\nmain\n(\n)\n{\nreturn\n0\n;\n}").into_bytes();
         let mut lex = Lexer::default();
-        lex.lex(bytes);
+
+        lex.lex(bytes)?;
 
         assert_eq!(
             lex.tkns,
             [
                 Token {
+                    lexeme: vec![b'('],
                     ty: TokenType::LeftParen
                 },
                 Token {
+                    lexeme: vec![b')'],
                     ty: TokenType::RightParen
                 },
                 Token {
+                    lexeme: vec![b'{'],
                     ty: TokenType::LeftBrace
                 },
                 Token {
+                    lexeme: vec![b';'],
                     ty: TokenType::Semicolon
                 },
                 Token {
+                    lexeme: vec![b'}'],
                     ty: TokenType::RightBrace
                 }
             ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn integer_parsing() -> Result<(), ()> {
+        let bytes = String::from("1").into_bytes();
+        let mut lex = Lexer::default();
+
+        lex.lex(bytes)?;
+
+        assert_eq!(
+            lex.tkns,
+            [Token {
+                lexeme: vec![1],
+                ty: TokenType::Literal(Literal::Number(1.0))
+            }],
         );
 
         Ok(())
