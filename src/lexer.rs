@@ -1,11 +1,24 @@
+pub enum Keyword {
+    Return,
+    Int,
+}
+
+pub enum Literal {
+    Identifier(String),
+    Str(String),
+    Number(f64),
+}
+
 #[derive(Debug, PartialEq)]
 pub enum TokenType {
-    // Single Param Tokens
+    // Single Length Tokens
     LeftParen,
     RightParen,
     LeftBrace,
     RightBrace,
     Semicolon,
+    Literal,
+    Keyword,
 }
 
 #[derive(Debug, PartialEq)]
@@ -33,6 +46,7 @@ impl Lexer {
         self.src = v;
 
         for b in &self.src {
+            // matching all the single length tokens
             match b {
                 b'(' => self.tkns.push(Token {
                     ty: TokenType::LeftParen,
@@ -49,7 +63,12 @@ impl Lexer {
                 b';' => self.tkns.push(Token {
                     ty: TokenType::Semicolon,
                 }),
-                _ => (),
+                // match the literals under all the rest
+                b => {
+                    if b.is_ascii_digit() {
+                        ()
+                    }
+                }
             }
         }
 
@@ -62,22 +81,42 @@ impl Lexer {
     }
 }
 
+fn is_decimal_digit(b: u8) -> bool {
+    b.is_ascii_digit()
+}
+
+//b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'0'
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
 
     #[test]
-    fn newlines() -> Result<(), ()> {
-        let bytes: Vec<u8> = String::from("\nint\nmain\n(\n)\n{\nreturn\n0\n;\n})").into_bytes();
+    fn newlines_testcase() -> Result<(), ()> {
+        let bytes: Vec<u8> = String::from("\nint\nmain\n(\n)\n{\nreturn\n0\n;\n}").into_bytes();
         let mut lex = Lexer::default();
         lex.lex(bytes);
 
         assert_eq!(
             lex.tkns,
-            [Token {
-                ty: TokenType::LeftParen
-            }]
+            [
+                Token {
+                    ty: TokenType::LeftParen
+                },
+                Token {
+                    ty: TokenType::RightParen
+                },
+                Token {
+                    ty: TokenType::LeftBrace
+                },
+                Token {
+                    ty: TokenType::Semicolon
+                },
+                Token {
+                    ty: TokenType::RightBrace
+                }
+            ]
         );
 
         Ok(())
