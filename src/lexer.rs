@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
     // Single Param Tokens
     LeftParen,
@@ -8,7 +8,7 @@ pub enum TokenType {
     Semicolon,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
 }
@@ -29,7 +29,7 @@ impl Default for Lexer {
 }
 
 impl Lexer {
-    pub fn read_tokenize(&mut self, v: Vec<u8>) -> Result<(), ()> {
+    pub fn lex(&mut self, v: Vec<u8>) -> Result<(), ()> {
         self.src = v;
 
         for b in &self.src {
@@ -58,6 +58,28 @@ impl Lexer {
 
     pub fn print_tkns(&mut self) -> Result<(), ()> {
         println!("{:?}", self.tkns);
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn newlines() -> Result<(), ()> {
+        let bytes: Vec<u8> = String::from("\nint\nmain\n(\n)\n{\nreturn\n0\n;\n})").into_bytes();
+        let mut lex = Lexer::default();
+        lex.lex(bytes);
+
+        assert_eq!(
+            lex.tkns,
+            [Token {
+                ty: TokenType::LeftParen
+            }]
+        );
+
         Ok(())
     }
 }
